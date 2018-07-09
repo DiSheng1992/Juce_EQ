@@ -2,6 +2,18 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:../../../Source/BiquadFilter.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:../../../Source/BiquadFilter.h">
+   </FileRef>
+   <FileRef
+      location = "group:../../../Source/toneGenerator.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:../../../Source/toneGenerator.h">
+   </FileRef>
+   <FileRef
       location = "self:">
    </FileRef>
 </Workspace>

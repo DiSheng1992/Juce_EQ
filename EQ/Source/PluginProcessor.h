@@ -24,6 +24,8 @@ class EqAudioProcessor  : public AudioProcessor
 public:
     //==============================================================================
     EqAudioProcessor();
+
+    
     ~EqAudioProcessor();
 
     //==============================================================================
@@ -33,7 +35,10 @@ public:
    #ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
    #endif
-
+    //
+    void pushNextSampleIntoFifo(float sample) noexcept;
+    float passParemeter();
+    //
     void processBlock (AudioBuffer<float>&, MidiBuffer&) override;
 
     //==============================================================================
@@ -66,7 +71,11 @@ public:
     double freq, gain, q;
     int control;
     
-
+    enum
+    {
+        fftOrder = 10,
+        fftSize = 1<<fftOrder
+    };
 
 private:
     double SR;
@@ -76,9 +85,15 @@ private:
     BiquadFilter filterR;
     ToneGenerator toneL;
     ToneGenerator toneR;
-
     
-
+    //dsp::FFT performFrequencyOnlyForwardTransform;
+    
+    dsp::FFT forwardFFT;
+    float fifo[fftSize];
+    float fftData[2*fftSize];
+    int fifoIndex = 0;
+    bool nextFFTBlockReady = false;
+     
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EqAudioProcessor)

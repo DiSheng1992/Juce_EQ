@@ -14,7 +14,8 @@
 //==============================================================================
 EqAudioProcessor::EqAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
+     :  forwardFFT(fftOrder),
+AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  AudioChannelSet::stereo(), true)
@@ -22,6 +23,7 @@ EqAudioProcessor::EqAudioProcessor()
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
                      #endif
                        )
+
 #endif
 {
 }
@@ -98,6 +100,7 @@ void EqAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
     
+    
     SR = sampleRate;
     
     toneL.initialiseWave(500, 0.25, SR, ToneGenerator::NOISE);
@@ -141,6 +144,30 @@ bool EqAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 }
 #endif
 
+void EqAudioProcessor::pushNextSampleIntoFifo (float sample) noexcept
+{
+    // if the fifo contains enough data, set a flag to say
+    // that the next line should now be rendered..
+    
+    if (fifoIndex == fftSize)    // [8]
+    {
+        if (! nextFFTBlockReady) // [9]
+        {
+            zeromem (fftData, sizeof (fftData));
+            memcpy (fftData, fifo, sizeof (fifo));
+            nextFFTBlockReady = true;
+        }
+        fifoIndex = 0;
+    }
+    fifo[fifoIndex++] = sample;  // [9]
+}
+
+float EqAudioProcessor::passParemeter() {
+    forwardFFT.performFrequencyOnlyForwardTransform (fftData);
+    float a;
+    a = *std::max_element(fftData,fftData+fftSize)*22050/fftSize;
+    return a;
+}
 void EqAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
     ScopedNoDenormals noDenormals;
@@ -171,9 +198,32 @@ void EqAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& mid
         float output;
         float input;
         
-        
-        
         BiquadFilter::filterType type;
+        
+        //save audio frame:
+        auto* inputData = buffer.getReadPointer (channel);
+        //float audio_frame[buffer.getNumSamples()];
+        
+        for (int i = 0; i < buffer.getNumSamples(); i++){
+            pushNextSampleIntoFifo (inputData[i]);
+            //audio_frame[i] = inputData[i];
+        }
+        
+        //forwardFFT.performFrequencyOnlyForwardTransform(audio_frame);
+        float frequency;
+        int addGain = 0;
+        frequency = passParemeter();
+        if (frequency > 1000){
+            addGain = 1;
+        }
+
+        
+        
+        
+        
+        
+        
+        //presetings:
         static float pre_set_gain[10][10] = {
             {3,    3, 0, 0,  0,  0, 0, 0,  3,  3},       /* Normal Preset */
             {5,    5, 3, 3, 2, 2, 4, 4,  4,  4},       /* Classical Preset */
@@ -191,6 +241,8 @@ void EqAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& mid
         static float pre_set_q[10] = {1.03, 0.555, 0.255, 0.25, 0.253, 0.244, 0.258, 0.246, 0.317, 1.502};
         static float pre_set_frequency[10] = {31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000};
 
+        
+        //processing:
         for (int i = 0; i < buffer.getNumSamples(); i++)
         {
             
@@ -198,7 +250,7 @@ void EqAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& mid
             
             if (channel == 0){
                 input = toneL.getValue();
-                filterL.setParameters(pre_set_frequency[0], pre_set_gain[control][0], pre_set_q[0], type);
+                filterL.setParameters(pre_set_frequency[0], pre_set_gain[control][0]+addGain, pre_set_q[0], type);
                 filterL.addSample(input);
                 output = filterL.getSample();
 
@@ -206,7 +258,7 @@ void EqAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& mid
             }
             else{
                 input = toneR.getValue();
-                filterR.setParameters(pre_set_frequency[0], pre_set_gain[control][0], pre_set_q[0], type);
+                filterR.setParameters(pre_set_frequency[0], pre_set_gain[control][0]+addGain, pre_set_q[0], type);
                 filterR.addSample(input);
                 output = filterR.getSample();
             }
@@ -215,7 +267,7 @@ void EqAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& mid
                 type = static_cast<BiquadFilter::filterType>(2);
                 if (channel == 0){
                     input = filterL.getSample();
-                    filterL.setParameters(pre_set_frequency[j], pre_set_gain[control][j], pre_set_q[j], type);
+                    filterL.setParameters(pre_set_frequency[j], pre_set_gain[control][j]+addGain, pre_set_q[j], type);
                     filterL.addSample(input);
                     output = filterL.getSample();
                     
@@ -284,5 +336,6 @@ void EqAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 // This creates new instances of the plugin..
 AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new EqAudioProcessor();
+    return new EqAudioProcessor()
+    ;
 }

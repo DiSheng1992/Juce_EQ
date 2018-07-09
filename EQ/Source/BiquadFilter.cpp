@@ -22,6 +22,7 @@ void BiquadFilter::clear()
 {
     std::memset(xBuffer, 0, bufferSize);
     std::memset(yBuffer, 0, bufferSize);
+
 }
 
 void BiquadFilter::setParameters(double frequency, double gain, double q, filterType filter)
@@ -46,6 +47,7 @@ void BiquadFilter::caluclateCoefficients()
     float w = 2*double_Pi*(kFrequency/fs);
     float alpha = sinf(w) / (2*kQ);
     float a = pow(10, (kGain/40));
+    //float a = pow(10, (kGain/20));
     
     if (kFilter == LOWPASS)
     {
@@ -65,7 +67,7 @@ void BiquadFilter::caluclateCoefficients()
         coeff[4] = -2 * cosf(w);
         coeff[5] = 1 - alpha;
     }
-    if (kFilter == PEAK1 || PEAK2 || PEAK3 || PEAK4 || PEAK5 || PEAK6 || PEAK7 || PEAK8)
+    if (kFilter == PEAK)
     {
         coeff[0] = 1 + (alpha * a);
         coeff[1] = -2 * cosf(w);
@@ -82,6 +84,7 @@ float BiquadFilter::getSample()
     
     float y = (coeff[0] / coeff[3])*xBuffer[readPos] + (coeff[1] / coeff[3])*xBuffer[readPosOne] + (coeff[2] / coeff[3])*xBuffer[readPosTwo]
     - (coeff[4] / coeff[3])*yBuffer[readPosOne] - (coeff[5] / coeff[3])*yBuffer[readPosTwo];
+    
     
     addToBuffer(y, yBuffer);
     

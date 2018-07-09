@@ -171,28 +171,81 @@ void EqAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& mid
         float output;
         float input;
         
-        BiquadFilter::filterType type = static_cast<BiquadFilter::filterType>(control);
         
-        filterL.setParameters(freq, gain, q, type);
-        filterR.setParameters(freq, gain, q, type);
+        
+        BiquadFilter::filterType type;
+        static float pre_set_gain[10][10] = {
+            {3,    3, 0, 0,  0,  0, 0, 0,  3,  3},       /* Normal Preset */
+            {5,    5, 3, 3, 2, 2, 4, 4,  4,  4},       /* Classical Preset */
+            {6,    6, 0, 0,  2,  2, 4, 4,  1,  1},       /* Dance Preset */
+            {0,    0, 0, 0,  0,  0, 0, 0,  0,  0},       /* Flat Preset */
+            {3,    3, 0, 0,  0,  0, 2, 2, 1, 1},       /* Folk Preset */
+            {4,    4, 1, 1,  9,  9, 3, 3,  0,  0},       /* Heavy Metal Preset */
+            {5,    5, 3, 3,  0,  0, 1, 1,  3,  3},       /* Hip Hop Preset */
+            {4,    4, 2, 2, 2, 2, 2, 2,  5,  5},       /* Jazz Preset */
+            {1,  1, 2, 2,  5,  5, 1, 1, 2, 2},       /* Pop Preset */
+            {5,    5, 3, 3, 1, 1, 3, 3,  5,  5} };     /* Rock Preset */
+        
+        
+
         static float pre_set_q[10] = {1.03, 0.555, 0.255, 0.25, 0.253, 0.244, 0.258, 0.246, 0.317, 1.502};
         static float pre_set_frequency[10] = {31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000};
-        q = pre_set_q[type];
-        freq = pre_set_frequency[type];
+
         for (int i = 0; i < buffer.getNumSamples(); i++)
         {
-            if (channel == 0)
-            {
+            
+            type = static_cast<BiquadFilter::filterType>(0);
+            
+            if (channel == 0){
                 input = toneL.getValue();
+                filterL.setParameters(pre_set_frequency[0], pre_set_gain[control][0], pre_set_q[0], type);
                 filterL.addSample(input);
                 output = filterL.getSample();
+
+                
             }
-            else
-            {
+            else{
                 input = toneR.getValue();
+                filterR.setParameters(pre_set_frequency[0], pre_set_gain[control][0], pre_set_q[0], type);
                 filterR.addSample(input);
                 output = filterR.getSample();
             }
+            
+            for (int j = 1; j<=8; j++){
+                type = static_cast<BiquadFilter::filterType>(2);
+                if (channel == 0){
+                    input = filterL.getSample();
+                    filterL.setParameters(pre_set_frequency[j], pre_set_gain[control][j], pre_set_q[j], type);
+                    filterL.addSample(input);
+                    output = filterL.getSample();
+                    
+                }
+                else{
+                    input = filterR.getSample();
+                    filterR.setParameters(pre_set_frequency[j], pre_set_gain[control][j], pre_set_q[j], type);
+                    filterR.addSample(input);
+                    output = filterR.getSample();
+                }
+            }
+
+
+            type = static_cast<BiquadFilter::filterType>(1);
+
+            if (channel == 0){
+            input = filterL.getSample();
+            filterL.setParameters(pre_set_frequency[9], pre_set_gain[control][9], pre_set_q[9], type);
+            filterL.addSample(input);
+            output = filterL.getSample();
+            
+            }
+            else{
+            input = filterR.getSample();
+            filterR.setParameters(pre_set_frequency[9], pre_set_gain[control][9], pre_set_q[9], type);
+            filterR.addSample(input);
+            output = filterR.getSample();
+            }
+                
+             
             
             channelData[i] = output;
         }

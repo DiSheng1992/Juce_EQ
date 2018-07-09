@@ -15,7 +15,8 @@ public:
     
     BiquadFilter();
     
-    enum filterType { LOWPASS, PEAK1, PEAK2, PEAK3, PEAK4, PEAK5, PEAK6, PEAK7, PEAK8, HIGHPASS};
+    //enum filterType { LOWPASS, PEAK1, PEAK2, PEAK3, PEAK4, PEAK5, PEAK6, PEAK7, PEAK8, HIGHPASS};
+    enum filterType {LOWPASS, PEAK, HIGHPASS};
     
     float getSample();
     
@@ -40,6 +41,7 @@ private:
     
     float* xBuffer;
     float* yBuffer;
+
     
     void addToBuffer(float sample, float* buffer);
     void getReadPos();

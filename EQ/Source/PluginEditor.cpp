@@ -53,13 +53,14 @@ EqAudioProcessorEditor::EqAudioProcessorEditor (EqAudioProcessor& p)
     
     
     gainSlider.setSliderStyle(Slider::RotaryVerticalDrag);
+    // Not sure if that operator Gain*12/15 is actually working
     gainSlider.setRange(0, 11, 1);
     gainSlider.setValue(5);
     gainSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
     gainSlider.addListener(this);
     
     addAndMakeVisible(&gainSlider);
-    
+
     gainLabel.attachToComponent(&gainSlider, false);
     gainLabel.setText("Gain", NotificationType::dontSendNotification);
     gainLabel.setJustificationType(Justification::centred);
@@ -79,7 +80,7 @@ EqAudioProcessorEditor::EqAudioProcessorEditor (EqAudioProcessor& p)
     qLabel.setJustificationType(Justification::centred);
     */
     
-    
+    /*
     filterMenu.addItem("Lowpass", 1);
     filterMenu.addItem("Peak1", 2);
     filterMenu.addItem("Peak2", 3);
@@ -90,6 +91,17 @@ EqAudioProcessorEditor::EqAudioProcessorEditor (EqAudioProcessor& p)
     filterMenu.addItem("Peak7", 8);
     filterMenu.addItem("Peak8", 9);
     filterMenu.addItem("Hightpass", 10);
+     */
+    filterMenu.addItem("Normal", 1);
+    filterMenu.addItem("Classical", 2);
+    filterMenu.addItem("Dance", 3);
+    filterMenu.addItem("Flat", 4);
+    filterMenu.addItem("Folk", 5);
+    filterMenu.addItem("Heavy", 6);
+    filterMenu.addItem("Hip Hop", 7);
+    filterMenu.addItem("Jazz", 8);
+    filterMenu.addItem("Pop", 9);
+    filterMenu.addItem("Rock", 10);
     filterMenu.setSelectedId(0);
     filterMenu.addListener(this);
     
@@ -137,9 +149,9 @@ void EqAudioProcessorEditor::sliderValueChanged (Slider* slider)
     //processor.noteOnVel = midiVolume.getValue();
     
 
-    processor.freq = frequencySlider.getValue();
+    //processor.freq = frequencySlider.getValue();
     processor.gain = gainSlider.getValue();
-    processor.q = qSlider.getValue();
+    //processor.q = qSlider.getValue();
     
     
 }
